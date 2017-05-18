@@ -37,6 +37,7 @@ Mat imgPre;
 Mat imgCur;
 Mat imgNext;
 Mat imgShow;
+std::vector<cv::String> fileNames;
 std::vector<std::vector<CvPoint>> featureList(MAX_CORNERS , std::vector<CvPoint>(0,0));
 std::map<CvPoint , int > map;
 std::vector<CvPoint> reuse2;
@@ -62,7 +63,7 @@ void onMouse( int event, int x, int y, int, void* ) {
         return;
     
     CvPoint pt = CvPoint(x,y);
-    RectBoxes::addCorner(pt);
+    RectBoxes::addCorner(pt, 2);
     std::cout<<"x="<<pt.x<<"\t y="<<pt.y<<"\n";
 }
 
@@ -261,12 +262,13 @@ void drawRectangle(CvPoint topLeft, CvPoint bottomRight) {
 }
 
 //find point in the rect and calculate the translation vector than create new rect
-void findPointInRectAndCreateNewRect(int i) {
-    int rectListSize = RectBoxes::getRectCornerSize();
+//flag==1 for keep update for current frame, flag==2 for insert Frame Num And Update To CurrentFrame
+void findPointInRectAndCreateNewRect(int i, int flag) {
+    int rectListSize = RectBoxes::getRectCornerSize(flag);
     //loop through all the rectangles. Each rect use 2 spot to store. So r+=2
     for(int r = 0 ; r < rectListSize ; r+=2) {
-        CvPoint topLeft = RectBoxes::popFromRectCorner();
-        CvPoint bottomRight = RectBoxes::popFromRectCorner();
+        CvPoint topLeft = RectBoxes::popFromRectCorner(flag);
+        CvPoint bottomRight = RectBoxes::popFromRectCorner(flag);
         //loop through all key point in previous frame
         for(int k = 0 ; k < MAX_CORNERS ; k++) {
             CvPoint pointPreFrame = featureList[k][(i-2)*2];
@@ -279,17 +281,51 @@ void findPointInRectAndCreateNewRect(int i) {
         }
         CvPoint medianTranslationVec = RectBoxes::calculateMedianTranslationVec();
         // chack validity
-        if(medianTranslationVec.x != -2000 && medianTranslationVec.y != -2000) {
+        if(medianTranslationVec.x != -20000 && medianTranslationVec.y != -20000) {
             CvPoint newTopLeft = CvPoint(topLeft.x + medianTranslationVec.x, topLeft.y +medianTranslationVec.y);
             CvPoint newBottomRight = CvPoint(bottomRight.x + medianTranslationVec.x, bottomRight.y + medianTranslationVec.y);
             
             //update the rect for this frame
-            RectBoxes::addCorner(newTopLeft);
-            RectBoxes::addCorner(newBottomRight);
+            RectBoxes::addCorner(newTopLeft, flag);
+            RectBoxes::addCorner(newBottomRight, flag);
             
             //draw rectangle
-            drawRectangle(newTopLeft, newBottomRight);
+            if(flag == 1) {
+                drawRectangle(newTopLeft, newBottomRight);
+            }
         }
+    }
+}
+
+void insertFrameNumAndUpdateToCurrentFrame(int i) {
+    //insert the absolute frame number
+    std::cout<<"Please insert frame number"<<std::endl;
+    int frameNumDelayed;
+    std::cin>>frameNumDelayed;
+    std::cout<<"Frame Numer is:"<<frameNumDelayed<<std::endl;
+    if(frameNumDelayed > i) {
+        std::cout<<"frame number should be lesser than current frame number"<<std::endl;
+    } else {
+        //open window to drag rectangle
+        Mat imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
+        resize(imgDragRect, imgDragRect, imgSize);
+        namedWindow("Please drag rectangles");
+        imshow("Please drag rectangles",imgDragRect);
+        //select rect box by click 2 corner(top left and bottom right)
+        setMouseCallback("Please drag rectangles", onMouse, 0 );
+        //wait for dragging rectangles
+        cvWaitKey(0);
+        //throw window and release image
+        destroyWindow("Please drag rectangles");
+        imgDragRect.release();
+        
+        //update the rect location to current frame
+        //frameNumDelayed + 1 because the rect is in the correct location in this frame, next frame and further neet to process and relocate
+        for(int k = frameNumDelayed + 1 ; k <= i ; k++) {
+            findPointInRectAndCreateNewRect(k, 2);
+        }
+        //shift the rect corner to the global queue(rectBoxCorners) to keep tracking in the frame after
+        RectBoxes::shiftFromSubqueueToGlobalQueue();
     }
 }
 
@@ -300,7 +336,6 @@ int main(int argc, const char * argv[]) {
 
     
     //read file
-    std::vector<cv::String> fileNames;
     String folder = "/Users/boyang/workspace/BoxTracking/src";
     cv::glob(folder, fileNames);
     
@@ -504,21 +539,23 @@ int main(int argc, const char * argv[]) {
         
         if(i>1) {
             //find points in the rectangle
-            findPointInRectAndCreateNewRect(i);
+            findPointInRectAndCreateNewRect(i, 1);
         }
-        
-
         
         namedWindow("LKpyr_opticalFlow");
         imshow("LKpyr_opticalFlow",imgShow);
+        std::cout<<"Current Frame Number:"<<i<<std::endl<<"Press 'd' to define boxes"<<std::endl;
+        
         
         //save image
         imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
         
-        //select rect box by click 2 corner(top left and bottom right)
-        setMouseCallback("LKpyr_opticalFlow", onMouse, 0 );
+        int key = cvWaitKey(0);
         
-        cvWaitKey(0);
+        //if press key "d" means want to insert delayed frame number
+        if(key == 'd') {
+            insertFrameNumAndUpdateToCurrentFrame(i);
+        }
     }
 
     

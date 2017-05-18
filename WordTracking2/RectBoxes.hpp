@@ -16,17 +16,19 @@
 
 class RectBoxes {
 public:
-    static void addCorner(CvPoint pt);
-    static int getRectCornerSize();
-    static CvPoint popFromRectCorner();
+    static void addCorner(CvPoint pt, int flag);
+    static int getRectCornerSize(int flag);
+    static CvPoint popFromRectCorner(int flag);
     static bool insideTheBox(CvPoint topLeft, CvPoint bottomRight, CvPoint pointPreFram);
     static void pushToInBoxPointsPreFrame(CvPoint pt);
     static void pushToInBoxPointsCurFrame(CvPoint pt);
     static void pushDiff(CvPoint pt);
     static CvPoint calculateMedianTranslationVec();
+    static void shiftFromSubqueueToGlobalQueue();
     
 private:
     static std::queue<CvPoint> rectBoxCorners;
+    static std::queue<CvPoint> rectBoxCornersCatchUpToCurFrame;
     static std::vector<CvPoint> pointDiff;
     
 
