@@ -341,6 +341,11 @@ int main(int argc, const char * argv[]) {
     
     //loop through all the images in the file
     for(int i = 1 ; i < fileNames.size() - 1 ; i++) {
+        //Timer
+        std::clock_t start;
+        double duration;
+        start = std::clock();
+        
         //counting all output key point both good and bad one
         int keypoint_cnt = 0;
         //count the numbers of features which are in track
@@ -546,6 +551,9 @@ int main(int argc, const char * argv[]) {
         imshow("LKpyr_opticalFlow",imgShow);
         std::cout<<"Current Frame Number:"<<i<<std::endl<<"Press 'd' to define boxes"<<std::endl;
         
+        //Output timer
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout<<"Time: "<< duration <<'\n';
         
         //save image
         imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
