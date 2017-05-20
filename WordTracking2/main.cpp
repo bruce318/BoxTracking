@@ -18,11 +18,14 @@
 using namespace cv;
 
 //global var
-const int MAX_CORNERS = 2000;
+const int MAX_CORNERS = 500;
 const int TOLERENCE_WINSIZE = 15;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
 const Size imgSize = Size(640,480);//640, 480
+
+TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
+Size subPixWinSize(10,10), winSize(31,31);
 
 
 int cntAddByTolerance = 0;
@@ -30,6 +33,7 @@ int count = 0;
 int cntTolerancePerformance = 0;
 int cnt_total_valid_point = 0;
 bool opticalFlowLineShow = false;
+bool videoInput = true;
 
 Scalar chainLengthColor[8] = {Scalar(0,0,255),Scalar(0,153,255),Scalar(0,255,255),Scalar(0,255,0),Scalar(255,255,0),Scalar(255,0,0),Scalar(255,0,153),Scalar(0,0,0)};//rainbow order + black
 
@@ -330,17 +334,32 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
 }
 
 int main(int argc, const char * argv[]) {
-    //some var
-    TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
-    Size subPixWinSize(10,10), winSize(31,31);
+    //declear frame num
+    int maxFrameNum = 0;
+    
+    VideoCapture cap("/Users/boyang/workspace/BoxTracking/srcVideo/IMG_7087.MOV"); // open the default camera
+    if(!cap.isOpened()) {
+        return -1;// check if we succeeded
+    }
+    //if vedio input
+    if (videoInput) {
+        cap >> imgNext;
+        resize(imgNext, imgNext, imgSize);
+        imgNext.copyTo(imgShow);
+        cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
+        maxFrameNum = 1000;
+    } else {//image input
+        //read file
+        String folder = "/Users/boyang/workspace/BoxTracking/src";
+        cv::glob(folder, fileNames);
+        //load first frame
+        imgNext = imread(fileNames[1], IMREAD_GRAYSCALE);
+        resize(imgNext, imgNext, imgSize);
+        maxFrameNum = fileNames.size() - 1;
+    }
 
-    
-    //read file
-    String folder = "/Users/boyang/workspace/BoxTracking/src";
-    cv::glob(folder, fileNames);
-    
     //loop through all the images in the file
-    for(int i = 1 ; i < fileNames.size() - 1 ; i++) {
+    for(int i = 1 ; i <maxFrameNum ; i++) {
         //Timer
         std::clock_t start;
         double duration;
@@ -357,14 +376,28 @@ int main(int argc, const char * argv[]) {
         //create tracking table for this frame
         std::vector<int> trackingTableThisFrame(MAX_CORNERS, 0);
         
-        //load image
-        imgCur = imread(fileNames[i], IMREAD_GRAYSCALE );
-        resize(imgCur, imgCur, imgSize);
-        imgNext = imread(fileNames[i+1], IMREAD_GRAYSCALE);
-        resize(imgNext, imgNext, imgSize);
-        //load a color image to show
-        imgShow = imread(fileNames[i], IMREAD_COLOR);
-        resize(imgShow, imgShow, imgSize);
+        //shift image, clear and copy
+        imgPre.release();
+        //copy to previous frame
+        imgCur.copyTo(imgPre);
+        imgCur.release();
+        imgNext.copyTo(imgCur);
+        imgNext.release();
+        
+        //video input
+        if (videoInput) {
+            cap >> imgNext;
+            resize(imgNext, imgNext, imgSize);
+            imgNext.copyTo(imgShow);
+            cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
+        } else {//image input
+            //load image
+            imgNext = imread(fileNames[i+1], IMREAD_GRAYSCALE);
+            resize(imgNext, imgNext, imgSize);
+            //load a color image to show
+            imgShow = imread(fileNames[i], IMREAD_COLOR);
+            resize(imgShow, imgShow, imgSize);
+        }
         
         int corner_count=MAX_CORNERS;
         //set it later
@@ -516,14 +549,9 @@ int main(int argc, const char * argv[]) {
         //push back the tracking table for this frame
         trackingTable.push_back(trackingTableThisFrame);
         
-        imgPre.release();
-        //copy to previous frame
-        imgCur.copyTo(imgPre);
         //clear
         temp.clear();
         trackingTableThisFrame.clear();
-        imgCur.release();
-        imgNext.release();
         
         
         //check the number of tracked key point
@@ -579,6 +607,8 @@ int main(int argc, const char * argv[]) {
     //    std::cout<<"total tracked keypoint"<<count<<std::endl;
     std::cout<<"total valid keypoint"<<cnt_total_valid_point<<std::endl;
 
+     
+    
     return 0;
     
 }
