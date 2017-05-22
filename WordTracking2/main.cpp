@@ -46,6 +46,7 @@ std::vector<std::vector<CvPoint>> featureList(MAX_CORNERS , std::vector<CvPoint>
 std::map<CvPoint , int > map;
 std::vector<CvPoint> reuse2;
 std::vector<std::vector<int> > trackingTable;//a table to keep a record of tracking
+std::vector<Mat> preFrames(10);//store 10 frames to drag rects
 
 
 //functions
@@ -311,7 +312,12 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
         std::cout<<"frame number should be lesser than current frame number"<<std::endl;
     } else {
         //open window to drag rectangle
-        Mat imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
+        Mat imgDragRect;
+        if(videoInput) {
+            imgDragRect = preFrames[frameNumDelayed%10];
+        } else {
+            imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
+        }
         resize(imgDragRect, imgDragRect, imgSize);
         namedWindow("Please drag rectangles");
         imshow("Please drag rectangles",imgDragRect);
@@ -346,6 +352,7 @@ int main(int argc, const char * argv[]) {
         cap >> imgNext;
         resize(imgNext, imgNext, imgSize);
         imgNext.copyTo(imgShow);
+        imgShow.copyTo(preFrames[0]);//for drawing rect on previous frames
         cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
         maxFrameNum = 1000;
     } else {//image input
@@ -389,6 +396,7 @@ int main(int argc, const char * argv[]) {
             cap >> imgNext;
             resize(imgNext, imgNext, imgSize);
             imgNext.copyTo(imgShow);
+            imgShow.copyTo(preFrames[i%10]);//for drawing rect on previous frames
             cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
         } else {//image input
             //load image
