@@ -369,13 +369,9 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
     while(1) {
         //frame num increase 1
         i++;
-        //check finished
-        if (videoInput) {
-            
-        } else {
-            if(i >= fileNames.size() - 1) {
-                return 0;
-            }
+        //check finished for images input
+        if(i >= fileNames.size() - 1) {
+            return 0;
         }
 
         //Timer
@@ -404,7 +400,12 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         
         //video input
         if (videoInput) {
+            //load the frame
             cap >> imgNext;
+            //check finished
+            if (imgNext.empty()) {
+                return 0;
+            }
             resize(imgNext, imgNext, imgSize);
             imgNext.copyTo(imgShow);
             imgShow.copyTo(preFrames[i%10]);//for drawing rect on previous frames
