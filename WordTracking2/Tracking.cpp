@@ -20,7 +20,7 @@ using namespace cv;
 
 //global var
 const int MAX_CORNERS = 500;
-const int TOLERENCE_WINSIZE = 15;//half of the winsize eg. 3 means winsize is 7
+const int TOLERENCE_WINSIZE = 5;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
 const Size imgSize = Size(640,480);//640, 480
@@ -509,17 +509,18 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
                     
                 } else {//new feature to track
                     //record it in the reuse array then use some tolerance to check again
-                    reuse.push_back(p0);
-                    reuse.push_back(p1);
+                    reuse2.push_back(p0);
+                    reuse2.push_back(p1);
                 }
             }
         }
         
         
         if (i > 1) {
+            //to speed up,canceled the second round check
             //second round add tolerance seek tracking point
-            second_round_check(reuse, temp, i, trackingTableThisFrame);
-            reuse.clear();
+//            second_round_check(reuse, temp, i, trackingTableThisFrame);
+//            reuse.clear();
             
             thirdRoundCheck(i, temp, trackingTableThisFrame);
             reuse2.clear();
