@@ -457,6 +457,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
                              status,
                              error
                              );
+
         
         for(int j=0;j<corner_count;j++)
         {
@@ -605,7 +606,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         std::cout<<"Time: "<< duration <<'\n';
         
         //save image
-        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
+//        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
         
         int key = cvWaitKey(0);
         
