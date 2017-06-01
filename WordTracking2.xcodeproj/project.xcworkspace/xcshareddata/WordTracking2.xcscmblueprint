@@ -1,14 +1,16 @@
 {
-  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "4B11052C64BCE500B5E9E72119D4670B76E1D09E",
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "CD571551A0D9E10BAFC46F35A2F66DC616237A50",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
 
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "CD571551A0D9E10BAFC46F35A2F66DC616237A50" : 9223372036854775807,
     "1EA6D39F3BD6E1E9F3E19A20560CD0012FCA42BD" : 9223372036854775807,
     "4B11052C64BCE500B5E9E72119D4670B76E1D09E" : 9223372036854775807
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "E1C4EC14-2E74-447B-9BCF-11C96D07809C",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "CD571551A0D9E10BAFC46F35A2F66DC616237A50" : "BoxTracking\/",
     "1EA6D39F3BD6E1E9F3E19A20560CD0012FCA42BD" : "",
     "4B11052C64BCE500B5E9E72119D4670B76E1D09E" : "WordTracking2\/"
   },
@@ -25,6 +27,11 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:bruce318\/WordTracking2.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "4B11052C64BCE500B5E9E72119D4670B76E1D09E"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/bitbucket.org\/CVLabUCSC\/boxtracking.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "CD571551A0D9E10BAFC46F35A2F66DC616237A50"
     }
   ]
 }
