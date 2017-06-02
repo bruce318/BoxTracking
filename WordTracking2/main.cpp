@@ -7,6 +7,7 @@
 //
 
 #include "Tracking.hpp"
+#include "ReadRectFromFile.hpp"
 #include <string>
 
 int main(int argc, const char * argv[]) {
@@ -19,7 +20,9 @@ int main(int argc, const char * argv[]) {
     } else {
         inputPath= "/Users/boyang/workspace/BoxTracking/imageInput2/";//a image src
     }
-
+    //load rectangle box's coordinates
+    ReadRectFromFile::loadRects("/Users/boyang/workspace/BoxTracking/boxCoordinates/Video_5_3_2.txt");
+    
     //start
     return Tracking::doTracking(videoInput, inputPath);
 
