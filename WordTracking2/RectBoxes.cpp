@@ -72,7 +72,7 @@ void RectBoxes::pushDiff(CvPoint pt) {
 
 CvPoint RectBoxes::calculateMedianTranslationVec() {
     int size = pointDiff.size();
-    if (size < 5) {
+    if (size < 1) {
         std::cout<<"Not enough features found in box"<<std::endl;
         return CvPoint(-20000,-20000);
     }
@@ -86,6 +86,12 @@ void RectBoxes::shiftFromSubqueueToGlobalQueue() {
     while (rectBoxCornersCatchUpToCurFrame.size() != 0) {
         rectBoxCorners.push(rectBoxCornersCatchUpToCurFrame.front());
         rectBoxCornersCatchUpToCurFrame.pop();
+    }
+}
+
+void RectBoxes::clearRectBoxCorners() {
+    while (!rectBoxCorners.empty()) {
+        rectBoxCorners.pop();
     }
 }
 

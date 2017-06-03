@@ -12,7 +12,7 @@
 using namespace cv;
 
 //The number of frame interval to reset the rectangle coordinate by server
-int intervalOfFrame = 5;
+int ReadRectFromFile::intervalOfFrame = 5;
 
 //Top left and the bottom right of the rectangle
 std::vector<std::vector<CvPoint> > ReadRectFromFile::rects;
@@ -32,15 +32,9 @@ std::vector<int> stringLine2IntVector(std::string line) {
             start = end + 1;
         }
         //If it is the first number in the line and if the frame number is a multiple of the interval number means this frame's coordinates of the rectangle need to be read and udate. Others frame don't need to be read
-        if ((numIndex == 1) && (intNum%intervalOfFrame != 0)) {
+        if ((numIndex == 1) && (intNum%ReadRectFromFile::intervalOfFrame != 0)) {
             return thisLine;
-        } else if (numIndex == 1) {//pushback first num
-            thisLine.push_back(intNum);
-        } else if (numIndex == 2) {//pushback 2ed num
-            thisLine.push_back(intNum);
-        } else if (numIndex == 3) {//pushback 3rd num
-            thisLine.push_back(intNum);
-        } else if (numIndex == 4) {//pushback 4th num
+        } else  {//the first int is a multiple of the interval num, then push back all the int in this line
             thisLine.push_back(intNum);
         }
     }
@@ -50,13 +44,32 @@ std::vector<int> stringLine2IntVector(std::string line) {
 }
 
 //Insert the integer to the table by a kind of order
-void loadIntoTable(std::string line) {
+void ReadRectFromFile::loadIntoTable(std::string line) {
     std::vector<int> intInLine = stringLine2IntVector(line);
-    for (int i = 0 ; i < intInLine.size() ; i ++) {
-        std::cout << intInLine[i] <<std::endl;
+
+    if (intInLine.size() != 0) {
+        //check the input is right
+        if (intInLine.size() != 5) {
+            std::cout<<"inout error: Each line should have 5 numbers"<<std::endl;
+        } else {
+            int frameNum = intInLine[0];
+            int x = intInLine[1];
+            int y = intInLine[2];
+            int width = intInLine[3];
+            int height = intInLine[4];
+            
+            int rowNum = frameNum/intervalOfFrame;
+            
+            //If this is the first time to insert number in this line, need to create a new line
+            if ((int(rects.size()) - 1) < rowNum) {//rect.size()-1 is the row number
+                std::vector<CvPoint> newLine;
+                rects.push_back(newLine);
+            } else {//put top left and bottom right into the vector
+                rects[rowNum].push_back(CvPoint(x,y));
+                rects[rowNum].push_back(CvPoint(x + width, y + height));
+            }
+        }
     }
-    
-    
 }
 
 //Transfer the coordinate of rectangle in txt file into a well ordered table
@@ -71,4 +84,12 @@ void ReadRectFromFile::loadRects(std::string rectFilePath) {
         myfile.close();
     }
     else std::cout << "Unable to open file"<<std::endl;
+}
+
+void ReadRectFromFile::copyRectsToQueue(int frameNum) {
+    int rowNum = frameNum/intervalOfFrame - 1;//load the privious interval's frame to simulate delay
+    for (int k = 0 ; k < rects[rowNum].size() ; k++) {
+        RectBoxes::addCorner(rects[rowNum][k], 2);
+    }
+    
 }

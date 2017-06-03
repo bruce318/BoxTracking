@@ -15,6 +15,7 @@
 #include <iostream>
 #include <map>
 #include "RectBoxes.hpp"
+#include "ReadRectFromFile.hpp"
 
 using namespace cv;
 
@@ -23,7 +24,10 @@ const int MAX_CORNERS = 500;
 const int TOLERENCE_WINSIZE = 5;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
-const Size imgSize = Size(640,480);//640, 480
+const Size imgSize = Size(720,480);//640, 480
+bool opticalFlowLineShow = false;
+bool readRectFromTxt = true;
+bool videoInput;
 
 TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
 Size subPixWinSize(10,10), winSize(31,31);
@@ -33,8 +37,7 @@ int cntAddByTolerance = 0;
 int count = 0;
 int cntTolerancePerformance = 0;
 int cnt_total_valid_point = 0;
-bool opticalFlowLineShow = false;
-bool videoInput;
+
 
 Scalar chainLengthColor[8] = {Scalar(0,0,255),Scalar(0,153,255),Scalar(0,255,255),Scalar(0,255,0),Scalar(255,255,0),Scalar(255,0,0),Scalar(255,0,153),Scalar(0,0,0)};//rainbow order + black
 
@@ -267,7 +270,7 @@ void drawRectangle(CvPoint topLeft, CvPoint bottomRight) {
 }
 
 //find point in the rect and calculate the translation vector than create new rect
-//flag==1 for keep update for current frame, flag==2 for insert Frame Num And Update To CurrentFrame
+//flag==1 for keep update for current frame, flag==2 for far more previous Frame to catch up and update To CurrentFrame
 void findPointInRectAndCreateNewRect(int i, int flag) {
     int rectListSize = RectBoxes::getRectCornerSize(flag);
     //loop through all the rectangles. Each rect use 2 spot to store. So r+=2
@@ -337,6 +340,14 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
         //shift the rect corner to the global queue(rectBoxCorners) to keep tracking in the frame after
         RectBoxes::shiftFromSubqueueToGlobalQueue();
     }
+}
+
+void loadRectAndUpdate(int frameNum) {
+    ReadRectFromFile::copyRectsToQueue(frameNum);
+    for (int k = frameNum + 1 - ReadRectFromFile::intervalOfFrame ; k <= frameNum + 1 ; k++) {
+        findPointInRectAndCreateNewRect(k, 2);
+    }
+    RectBoxes::shiftFromSubqueueToGlobalQueue();
 }
 
 int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
@@ -613,6 +624,17 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         //if press key "d" means want to insert delayed frame number
         if(key == 'd') {
             insertFrameNumAndUpdateToCurrentFrame(i);
+        }
+        
+        //read the rectangles from txt file. read once every interval.
+        //read the privious interval's data to simulate the delay from the server.So first frame don't read data
+        //frame num i start from 1, others frame num counter start from 0. For consistance, i-1.
+        if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
+            //clear privious rect boxes
+            RectBoxes::clearRectBoxCorners();
+            
+            //load new boxes and update to current frame
+            loadRectAndUpdate(i-1);
         }
     }
     
