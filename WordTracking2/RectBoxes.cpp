@@ -72,7 +72,7 @@ void RectBoxes::pushDiff(CvPoint pt) {
 
 CvPoint RectBoxes::calculateMedianTranslationVec() {
     int size = pointDiff.size();
-    if (size < 1) {
+    if (size < 2) {
         std::cout<<"Not enough features found in box"<<std::endl;
         return CvPoint(-20000,-20000);
     }

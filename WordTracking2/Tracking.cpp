@@ -20,7 +20,7 @@
 using namespace cv;
 
 //global var
-const int MAX_CORNERS = 500;
+const int MAX_CORNERS = 750;
 const int TOLERENCE_WINSIZE = 5;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
@@ -260,13 +260,17 @@ void analysis() {
     }
 }
 
-void drawRectangle(CvPoint topLeft, CvPoint bottomRight) {
+void drawRectangle(CvPoint topLeft, CvPoint bottomRight, int colorIndex) {
+    Scalar color = Scalar(0, 255, 0);
+    if (colorIndex == 1) {
+        color = Scalar(0, 0, 255);
+    }
     CvPoint topRight = CvPoint(bottomRight.x, topLeft.y);
     CvPoint bottomLeft = CvPoint(topLeft.x, bottomRight.y);
-    line(imgShow,topLeft,topRight,CV_RGB(0,255,0),2);
-    line(imgShow,topRight,bottomRight,CV_RGB(0,255,0),2);
-    line(imgShow,bottomRight,bottomLeft,CV_RGB(0,255,0),2);
-    line(imgShow,bottomLeft,topLeft,CV_RGB(0,255,0),2);
+    line(imgShow,topLeft,topRight,color,2);
+    line(imgShow,topRight,bottomRight,color,2);
+    line(imgShow,bottomRight,bottomLeft,color,2);
+    line(imgShow,bottomLeft,topLeft,color,2);
 }
 
 //find point in the rect and calculate the translation vector than create new rect
@@ -299,7 +303,7 @@ void findPointInRectAndCreateNewRect(int i, int flag) {
             
             //draw rectangle
             if(flag == 1) {
-                drawRectangle(newTopLeft, newBottomRight);
+                drawRectangle(newTopLeft, newBottomRight, 0);
             }
         }
     }
@@ -321,7 +325,7 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
         } else {
             imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
         }
-        resize(imgDragRect, imgDragRect, imgSize);
+//        resize(imgDragRect, imgDragRect, imgSize);
         namedWindow("Please drag rectangles");
         imshow("Please drag rectangles",imgDragRect);
         //select rect box by click 2 corner(top left and bottom right)
@@ -342,9 +346,22 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
     }
 }
 
+void drawOriginalRect() {
+    int rectListSize = RectBoxes::getRectCornerSize(2);
+    for (int r = 0 ; r < rectListSize ; r += 2) {
+        CvPoint topLeft = RectBoxes::popFromRectCorner(2);//get the rect
+        CvPoint bottomRight = RectBoxes::popFromRectCorner(2);
+        drawRectangle(topLeft, bottomRight, 1);
+        RectBoxes::addCorner(topLeft, 2);//put it back
+        RectBoxes::addCorner(bottomRight, 2);
+    }
+    
+}
+
 void loadRectAndUpdate(int frameNum) {
     ReadRectFromFile::copyRectsToQueue(frameNum);
-    for (int k = frameNum + 1 - ReadRectFromFile::intervalOfFrame ; k <= frameNum + 1 ; k++) {
+    drawOriginalRect();
+    for (int k = frameNum + 1 + 1 - ReadRectFromFile::intervalOfFrame ; k <= frameNum  ; k++) {
         findPointInRectAndCreateNewRect(k, 2);
     }
     RectBoxes::shiftFromSubqueueToGlobalQueue();
@@ -362,7 +379,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             return -1;// check if we succeeded
         }
         cap >> imgNext;
-        resize(imgNext, imgNext, imgSize);
+//        resize(imgNext, imgNext, imgSize);
         imgNext.copyTo(imgShow);
         imgShow.copyTo(preFrames[0]);//for drawing rect on previous frames
         cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
@@ -372,7 +389,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         cv::glob(folder, fileNames);
         //load first frame
         imgNext = imread(fileNames[1], IMREAD_GRAYSCALE);
-        resize(imgNext, imgNext, imgSize);
+//        resize(imgNext, imgNext, imgSize);
     }
     //frame number
     int i = 0;
@@ -417,17 +434,17 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             if (imgNext.empty()) {
                 return 0;
             }
-            resize(imgNext, imgNext, imgSize);
+//            resize(imgNext, imgNext, imgSize);
             imgNext.copyTo(imgShow);
             imgShow.copyTo(preFrames[i%10]);//for drawing rect on previous frames
             cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
         } else {//image input
             //load image
             imgNext = imread(fileNames[i+1], IMREAD_GRAYSCALE);
-            resize(imgNext, imgNext, imgSize);
+//            resize(imgNext, imgNext, imgSize);
             //load a color image to show
             imgShow = imread(fileNames[i], IMREAD_COLOR);
-            resize(imgShow, imgShow, imgSize);
+//            resize(imgShow, imgShow, imgSize);
         }
         
         int corner_count=MAX_CORNERS;
@@ -478,7 +495,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             CvPoint p1=cvPoint(cvRound(featuresCur[j].x),cvRound(featuresCur[j].y));
             //draw line of the optical flow
             if(opticalFlowLineShow) {
-                line(imgShow,p0,p1,CV_RGB(255,255,255),1);
+                line(imgShow,p0,p1,CV_RGB(0,255,0),1);
             }
             
             //if is the first frame
@@ -603,12 +620,26 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         //        }
         //    }
         
+        
+        //read the rectangles from txt file. read once every interval.
+        //read the privious interval's data to simulate the delay from the server.So first frame don't read data
+        //frame num i start from 1, others frame num counter start from 0. For consistance, i-1.
+        if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
+            
+            //clear privious rect boxes
+            RectBoxes::clearRectBoxCorners();
+            
+            //load new boxes and update to current frame
+            loadRectAndUpdate(i-1);
+        }
+        
         if(i>1) {
-            //find points in the rectangle
+            //find points in the rectangle and update from provious frame to current frame
             findPointInRectAndCreateNewRect(i, 1);
         }
         
         namedWindow("LKpyr_opticalFlow");
+        resize(imgShow, imgShow, imgSize);
         imshow("LKpyr_opticalFlow",imgShow);
         std::cout<<"Current Frame Number:"<<i<<std::endl<<"Press 'd' to define boxes"<<std::endl;
         
@@ -617,7 +648,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         std::cout<<"Time: "<< duration <<'\n';
         
         //save image
-//        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
+        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
         
         int key = cvWaitKey(0);
         
@@ -626,16 +657,6 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             insertFrameNumAndUpdateToCurrentFrame(i);
         }
         
-        //read the rectangles from txt file. read once every interval.
-        //read the privious interval's data to simulate the delay from the server.So first frame don't read data
-        //frame num i start from 1, others frame num counter start from 0. For consistance, i-1.
-        if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
-            //clear privious rect boxes
-            RectBoxes::clearRectBoxCorners();
-            
-            //load new boxes and update to current frame
-            loadRectAndUpdate(i-1);
-        }
     }
     
     
