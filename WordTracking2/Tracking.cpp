@@ -28,6 +28,7 @@ const Size imgSize = Size(720,480);//640, 480
 bool opticalFlowLineShow = false;
 bool readRectFromTxt = true;
 bool videoInput;
+bool saveResult = false;
 
 TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
 Size subPixWinSize(10,10), winSize(31,31);
@@ -648,7 +649,9 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         std::cout<<"Time: "<< duration <<'\n';
         
         //save image
-        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
+        if (saveResult) {
+            imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
+        }
         
         int key = cvWaitKey(0);
         

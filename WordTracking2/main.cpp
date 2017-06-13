@@ -16,12 +16,12 @@ int main(int argc, const char * argv[]) {
     //path of the source
     std::string inputPath;
     if (videoInput) {
-        inputPath= "/Users/boyang/workspace/BoxTracking/videoInput/2.mp4";//a video src
+        inputPath= "/Users/boyang/workspace/BoxTracking/videoInput/1.mp4";//a video src
     } else {
         inputPath= "/Users/boyang/workspace/BoxTracking/imageInput/";//a image src
     }
     //load rectangle box's coordinates
-    ReadRectFromFile::loadRects("/Users/boyang/workspace/BoxTracking/boxCoordinates/2.txt");
+    ReadRectFromFile::loadRects("/Users/boyang/workspace/BoxTracking/boxCoordinates/1.txt");
     
     //start
     return Tracking::doTracking(videoInput, inputPath);
