@@ -15,15 +15,19 @@
 #include <iostream>
 #include <map>
 #include "RectBoxes.hpp"
+#include "ReadRectFromFile.hpp"
 
 using namespace cv;
 
 //global var
-const int MAX_CORNERS = 500;
+const int MAX_CORNERS = 750;
 const int TOLERENCE_WINSIZE = 5;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
-const Size imgSize = Size(640,480);//640, 480
+const Size imgSize = Size(720,480);//640, 480
+bool opticalFlowLineShow = false;
+bool readRectFromTxt = true;
+bool videoInput;
 
 TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
 Size subPixWinSize(10,10), winSize(31,31);
@@ -33,8 +37,7 @@ int cntAddByTolerance = 0;
 int count = 0;
 int cntTolerancePerformance = 0;
 int cnt_total_valid_point = 0;
-bool opticalFlowLineShow = false;
-bool videoInput;
+
 
 Scalar chainLengthColor[8] = {Scalar(0,0,255),Scalar(0,153,255),Scalar(0,255,255),Scalar(0,255,0),Scalar(255,255,0),Scalar(255,0,0),Scalar(255,0,153),Scalar(0,0,0)};//rainbow order + black
 
@@ -257,17 +260,21 @@ void analysis() {
     }
 }
 
-void drawRectangle(CvPoint topLeft, CvPoint bottomRight) {
+void drawRectangle(CvPoint topLeft, CvPoint bottomRight, int colorIndex) {
+    Scalar color = Scalar(0, 255, 0);
+    if (colorIndex == 1) {
+        color = Scalar(0, 0, 255);
+    }
     CvPoint topRight = CvPoint(bottomRight.x, topLeft.y);
     CvPoint bottomLeft = CvPoint(topLeft.x, bottomRight.y);
-    line(imgShow,topLeft,topRight,CV_RGB(0,255,0),2);
-    line(imgShow,topRight,bottomRight,CV_RGB(0,255,0),2);
-    line(imgShow,bottomRight,bottomLeft,CV_RGB(0,255,0),2);
-    line(imgShow,bottomLeft,topLeft,CV_RGB(0,255,0),2);
+    line(imgShow,topLeft,topRight,color,2);
+    line(imgShow,topRight,bottomRight,color,2);
+    line(imgShow,bottomRight,bottomLeft,color,2);
+    line(imgShow,bottomLeft,topLeft,color,2);
 }
 
 //find point in the rect and calculate the translation vector than create new rect
-//flag==1 for keep update for current frame, flag==2 for insert Frame Num And Update To CurrentFrame
+//flag==1 for keep update for current frame, flag==2 for far more previous Frame to catch up and update To CurrentFrame
 void findPointInRectAndCreateNewRect(int i, int flag) {
     int rectListSize = RectBoxes::getRectCornerSize(flag);
     //loop through all the rectangles. Each rect use 2 spot to store. So r+=2
@@ -296,7 +303,7 @@ void findPointInRectAndCreateNewRect(int i, int flag) {
             
             //draw rectangle
             if(flag == 1) {
-                drawRectangle(newTopLeft, newBottomRight);
+                drawRectangle(newTopLeft, newBottomRight, 0);
             }
         }
     }
@@ -318,7 +325,7 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
         } else {
             imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
         }
-        resize(imgDragRect, imgDragRect, imgSize);
+//        resize(imgDragRect, imgDragRect, imgSize);
         namedWindow("Please drag rectangles");
         imshow("Please drag rectangles",imgDragRect);
         //select rect box by click 2 corner(top left and bottom right)
@@ -339,6 +346,27 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
     }
 }
 
+void drawOriginalRect() {
+    int rectListSize = RectBoxes::getRectCornerSize(2);
+    for (int r = 0 ; r < rectListSize ; r += 2) {
+        CvPoint topLeft = RectBoxes::popFromRectCorner(2);//get the rect
+        CvPoint bottomRight = RectBoxes::popFromRectCorner(2);
+        drawRectangle(topLeft, bottomRight, 1);
+        RectBoxes::addCorner(topLeft, 2);//put it back
+        RectBoxes::addCorner(bottomRight, 2);
+    }
+    
+}
+
+void loadRectAndUpdate(int frameNum) {
+    ReadRectFromFile::copyRectsToQueue(frameNum);
+    drawOriginalRect();
+    for (int k = frameNum + 1 + 1 - ReadRectFromFile::intervalOfFrame ; k <= frameNum  ; k++) {
+        findPointInRectAndCreateNewRect(k, 2);
+    }
+    RectBoxes::shiftFromSubqueueToGlobalQueue();
+}
+
 int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
     //set input type
     videoInput = videoOrImage;
@@ -351,7 +379,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             return -1;// check if we succeeded
         }
         cap >> imgNext;
-        resize(imgNext, imgNext, imgSize);
+//        resize(imgNext, imgNext, imgSize);
         imgNext.copyTo(imgShow);
         imgShow.copyTo(preFrames[0]);//for drawing rect on previous frames
         cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
@@ -361,7 +389,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         cv::glob(folder, fileNames);
         //load first frame
         imgNext = imread(fileNames[1], IMREAD_GRAYSCALE);
-        resize(imgNext, imgNext, imgSize);
+//        resize(imgNext, imgNext, imgSize);
     }
     //frame number
     int i = 0;
@@ -406,17 +434,17 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             if (imgNext.empty()) {
                 return 0;
             }
-            resize(imgNext, imgNext, imgSize);
+//            resize(imgNext, imgNext, imgSize);
             imgNext.copyTo(imgShow);
             imgShow.copyTo(preFrames[i%10]);//for drawing rect on previous frames
             cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
         } else {//image input
             //load image
             imgNext = imread(fileNames[i+1], IMREAD_GRAYSCALE);
-            resize(imgNext, imgNext, imgSize);
+//            resize(imgNext, imgNext, imgSize);
             //load a color image to show
             imgShow = imread(fileNames[i], IMREAD_COLOR);
-            resize(imgShow, imgShow, imgSize);
+//            resize(imgShow, imgShow, imgSize);
         }
         
         int corner_count=MAX_CORNERS;
@@ -467,7 +495,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             CvPoint p1=cvPoint(cvRound(featuresCur[j].x),cvRound(featuresCur[j].y));
             //draw line of the optical flow
             if(opticalFlowLineShow) {
-                line(imgShow,p0,p1,CV_RGB(255,255,255),1);
+                line(imgShow,p0,p1,CV_RGB(0,255,0),1);
             }
             
             //if is the first frame
@@ -592,12 +620,26 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         //        }
         //    }
         
+        
+        //read the rectangles from txt file. read once every interval.
+        //read the privious interval's data to simulate the delay from the server.So first frame don't read data
+        //frame num i start from 1, others frame num counter start from 0. For consistance, i-1.
+        if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
+            
+            //clear privious rect boxes
+            RectBoxes::clearRectBoxCorners();
+            
+            //load new boxes and update to current frame
+            loadRectAndUpdate(i-1);
+        }
+        
         if(i>1) {
-            //find points in the rectangle
+            //find points in the rectangle and update from provious frame to current frame
             findPointInRectAndCreateNewRect(i, 1);
         }
         
         namedWindow("LKpyr_opticalFlow");
+        resize(imgShow, imgShow, imgSize);
         imshow("LKpyr_opticalFlow",imgShow);
         std::cout<<"Current Frame Number:"<<i<<std::endl<<"Press 'd' to define boxes"<<std::endl;
         
@@ -606,7 +648,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         std::cout<<"Time: "<< duration <<'\n';
         
         //save image
-//        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
+        imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
         
         int key = cvWaitKey(0);
         
@@ -614,6 +656,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         if(key == 'd') {
             insertFrameNumAndUpdateToCurrentFrame(i);
         }
+        
     }
     
     

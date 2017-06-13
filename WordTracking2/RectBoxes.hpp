@@ -25,6 +25,7 @@ public:
     static void pushDiff(CvPoint pt);
     static CvPoint calculateMedianTranslationVec();
     static void shiftFromSubqueueToGlobalQueue();
+    static void clearRectBoxCorners();
     
 private:
     static std::queue<CvPoint> rectBoxCorners;

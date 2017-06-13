@@ -7,6 +7,7 @@
 //
 
 #include "Tracking.hpp"
+#include "ReadRectFromFile.hpp"
 #include <string>
 
 int main(int argc, const char * argv[]) {
@@ -15,11 +16,13 @@ int main(int argc, const char * argv[]) {
     //path of the source
     std::string inputPath;
     if (videoInput) {
-        inputPath= "/Users/boyang/workspace/BoxTracking/videoInput/Video_30_2_3.mp4";//a video src
+        inputPath= "/Users/boyang/workspace/BoxTracking/videoInput/2.mp4";//a video src
     } else {
-        inputPath= "/Users/boyang/workspace/BoxTracking/imageInput2/";//a image src
+        inputPath= "/Users/boyang/workspace/BoxTracking/imageInput/";//a image src
     }
-
+    //load rectangle box's coordinates
+    ReadRectFromFile::loadRects("/Users/boyang/workspace/BoxTracking/boxCoordinates/2.txt");
+    
     //start
     return Tracking::doTracking(videoInput, inputPath);
 
