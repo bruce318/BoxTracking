@@ -26,5 +26,10 @@ For example:
         $ ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
 
 If video input path is blank, the system will run the video 1 by default.
+## Commands ##
+When running the code:
+*'q' -- quit
+*'n' -- next frame 
+
 ## The Result ##
 The bounding boxes represent the text field. The red boxes are the original text location which read directly from the file(text location of 5 frames before the current frame). The green boxes are the text field updated to the current frame by using tracking technique. The white line connected the original bounding box with the updated one.
