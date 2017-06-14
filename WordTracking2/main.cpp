@@ -14,19 +14,16 @@ int main(int argc, const char * argv[]) {
     //choose a input type video or images
     bool videoInput = true;//true is vedio input, false is images input
     //path of the source
-    std::string inputPath;
-    std::string filePath;
-    if (argc != 2) {
+    String inputPath(argv[1]);
+    String filePath(argv[2]);
+    if (argc != 3) {
         if (videoInput) {
             inputPath= "/Users/boyang/workspace/BoxTracking/videoInput/1.mp4";//a video src
         } else {
             inputPath= "/Users/boyang/workspace/BoxTracking/imageInput/1/";//a image src
         }
         filePath = "/Users/boyang/workspace/BoxTracking/boxCoordinates/1.txt";
-    } else {
-        inputPath = argv[0];
-        filePath = argv[1];
-    }
+    } 
     
     
     //load rectangle box's coordinates

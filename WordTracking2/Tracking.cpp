@@ -47,7 +47,7 @@ Mat imgCur;
 Mat imgNext;
 Mat imgShow;
 std::vector<cv::String> fileNames;
-std::vector<std::vector<CvPoint>> featureList(MAX_CORNERS , std::vector<CvPoint>(0,0));
+std::vector<std::vector<CvPoint> > featureList(MAX_CORNERS , std::vector<CvPoint>(0,0));
 std::map<CvPoint , int > map;
 std::vector<CvPoint> reuse2;
 std::vector<std::vector<int> > trackingTable;//a table to keep a record of tracking
@@ -225,7 +225,7 @@ void thirdRoundCheck(int i, std::vector<CvPoint> & temp, std::vector<int> & trac
 }
 
 //analysis: static of tracking chain
-void static_of_tracking_chain (std::vector<std::vector<CvPoint>> featureList) {
+void static_of_tracking_chain (std::vector<std::vector<CvPoint> > featureList) {
     for (int i = 0 ; i < featureList.size() ; i++) {
         int cnt_tracking_chain = 1;
         for (int j = 2 ; j < featureList[i].size() ; j+=2) {
@@ -530,7 +530,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
                     featureList[j].push_back(CvPoint(-1 , -1));
                 } else {
                     //mark it in the map
-                    map.emplace(p1 , j);
+                    map.insert(std::pair<CvPoint, int>(p1 , j));
                     //record the feature's coordinate
                     featureList[j].push_back(p0);
                     featureList[j].push_back(p1);
@@ -607,7 +607,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             //put the feature coordinate(not (-1,-1) one) into the map
             //and draw circles on the feature points. Color depends on the chain length
             if (featureList[k][i*2-1].x != -1 || featureList[k][i*2-1].y != -1) {
-                map.emplace(featureList[k][i*2-1] , k);
+                map.insert(std::pair<CvPoint, int>(featureList[k][i*2-1] , k));
                 int colorIndex = trackingTableThisFrame[k]>8?8:trackingTableThisFrame[k];
                 Scalar circleColor = chainLengthColor[colorIndex];
                 circle(imgShow, featureList[k][i*2 - 2], 3, circleColor, 1);
@@ -680,6 +680,10 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         //if press key "d" means want to insert delayed frame number
         if(key == 'd') {
             insertFrameNumAndUpdateToCurrentFrame(i);
+        }
+        
+        if(key == 'q') {
+            return 0;
         }
         
     }
