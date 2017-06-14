@@ -11,14 +11,13 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <queue>
 #include "opencv2/core/core.hpp"
 
 class RectBoxes {
 public:
     static void addCorner(CvPoint pt, int flag);
     static int getRectCornerSize(int flag);
-    static CvPoint popFromRectCorner(int flag);
+    static std::vector<CvPoint> popFromRectCorner(int flag);
     static bool insideTheBox(CvPoint topLeft, CvPoint bottomRight, CvPoint pointPreFram);
     static void pushToInBoxPointsPreFrame(CvPoint pt);
     static void pushToInBoxPointsCurFrame(CvPoint pt);
@@ -26,10 +25,11 @@ public:
     static CvPoint calculateMedianTranslationVec();
     static void shiftFromSubqueueToGlobalQueue();
     static void clearRectBoxCorners();
+    static void clearVec(int flag);
     
 private:
-    static std::queue<CvPoint> rectBoxCorners;
-    static std::queue<CvPoint> rectBoxCornersCatchUpToCurFrame;
+    static std::vector<CvPoint> rectBoxCorners;
+    static std::vector<CvPoint> rectBoxCornersCatchUpToCurFrame;
     static std::vector<CvPoint> pointDiff;
     
 

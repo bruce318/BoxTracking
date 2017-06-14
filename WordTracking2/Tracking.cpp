@@ -277,11 +277,13 @@ void drawRectangle(CvPoint topLeft, CvPoint bottomRight, int colorIndex) {
 //find point in the rect and calculate the translation vector than create new rect
 //flag==1 for keep update for current frame, flag==2 for far more previous Frame to catch up and update To CurrentFrame
 void findPointInRectAndCreateNewRect(int i, int flag) {
-    int rectListSize = RectBoxes::getRectCornerSize(flag);
+    std::vector<CvPoint> boxes = RectBoxes::popFromRectCorner(flag);
+    int rectListSize = boxes.size();
+    RectBoxes::clearVec(flag);
     //loop through all the rectangles. Each rect use 2 spot to store. So r+=2
     for(int r = 0 ; r < rectListSize ; r+=2) {
-        CvPoint topLeft = RectBoxes::popFromRectCorner(flag);
-        CvPoint bottomRight = RectBoxes::popFromRectCorner(flag);
+        CvPoint topLeft = boxes[r];
+        CvPoint bottomRight = boxes[r+1];
         //loop through all key point in previous frame
         for(int k = 0 ; k < MAX_CORNERS ; k++) {
             CvPoint pointPreFrame = featureList[k][(i-2)*2];
@@ -306,6 +308,10 @@ void findPointInRectAndCreateNewRect(int i, int flag) {
             if(flag == 1) {
                 drawRectangle(newTopLeft, newBottomRight, 0);
             }
+        } else {// lost tracking
+            //update the rect by (0,0).So thay we can keep the consistancy of the vector, in order to identify the rect by vector index num(know where the rect moved from).
+            RectBoxes::addCorner(CvPoint(0,0), flag);
+            RectBoxes::addCorner(CvPoint(0,0), flag);
         }
     }
 }
@@ -348,10 +354,12 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
 }
 
 void drawOriginalRect() {
-    int rectListSize = RectBoxes::getRectCornerSize(2);
+    std::vector<CvPoint> boxes = RectBoxes::popFromRectCorner(2);
+    int rectListSize = boxes.size();
+    RectBoxes::clearVec(2);
     for (int r = 0 ; r < rectListSize ; r += 2) {
-        CvPoint topLeft = RectBoxes::popFromRectCorner(2);//get the rect
-        CvPoint bottomRight = RectBoxes::popFromRectCorner(2);
+        CvPoint topLeft = boxes[r];//get the rect
+        CvPoint bottomRight = boxes[r+1];
         drawRectangle(topLeft, bottomRight, 1);
         RectBoxes::addCorner(topLeft, 2);//put it back
         RectBoxes::addCorner(bottomRight, 2);

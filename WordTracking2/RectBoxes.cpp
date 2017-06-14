@@ -8,8 +8,8 @@
 
 #include "RectBoxes.hpp"
 
-std::queue<CvPoint> RectBoxes::rectBoxCorners;
-std::queue<CvPoint> RectBoxes::rectBoxCornersCatchUpToCurFrame;
+std::vector<CvPoint> RectBoxes::rectBoxCorners;
+std::vector<CvPoint> RectBoxes::rectBoxCornersCatchUpToCurFrame;
 std::vector<CvPoint> RectBoxes::pointDiff;
 
 struct mySortClass {
@@ -25,9 +25,9 @@ struct mySortClass {
 //flag==1 for update from current flame to next frame, flag==2 for update from far behind to catch up to current flame
 void RectBoxes::addCorner(CvPoint pt, int flag) {
     if(flag == 1) {
-        rectBoxCorners.push(pt);
+        rectBoxCorners.push_back(pt);
     } else if (flag == 2) {
-        rectBoxCornersCatchUpToCurFrame.push(pt);
+        rectBoxCornersCatchUpToCurFrame.push_back(pt);
     }
 //    std::cout<<"rectBoxCorners Size:"<<rectBoxCorners.size()<<std::endl;
 }
@@ -42,17 +42,15 @@ int RectBoxes::getRectCornerSize(int flag) {
     return -1;
 }
 
-CvPoint RectBoxes::popFromRectCorner(int flag) {
-    CvPoint pt;
+std::vector<CvPoint> RectBoxes::popFromRectCorner(int flag) {
+    std::vector<CvPoint> pts;
     if (flag == 1) {
-        pt = rectBoxCorners.front();
-        rectBoxCorners.pop();
+        return rectBoxCorners;
     }
     else if (flag == 2) {
-        pt = rectBoxCornersCatchUpToCurFrame.front();
-        rectBoxCornersCatchUpToCurFrame.pop();
+        return rectBoxCornersCatchUpToCurFrame;
     }
-    return pt;
+    return pts;
 }
 
 //check the point is inside the box or not
@@ -83,15 +81,22 @@ CvPoint RectBoxes::calculateMedianTranslationVec() {
 }
 
 void RectBoxes::shiftFromSubqueueToGlobalQueue() {
-    while (rectBoxCornersCatchUpToCurFrame.size() != 0) {
-        rectBoxCorners.push(rectBoxCornersCatchUpToCurFrame.front());
-        rectBoxCornersCatchUpToCurFrame.pop();
+    rectBoxCorners.clear();
+    for (int k = 0 ; k < rectBoxCornersCatchUpToCurFrame.size() ; k++) {
+        rectBoxCorners.push_back(rectBoxCornersCatchUpToCurFrame[k]);
     }
+    rectBoxCornersCatchUpToCurFrame.clear();
 }
 
 void RectBoxes::clearRectBoxCorners() {
-    while (!rectBoxCorners.empty()) {
-        rectBoxCorners.pop();
-    }
+    rectBoxCorners.clear();
 }
 
+void RectBoxes::clearVec(int flag) {
+    if (flag == 1) {
+        rectBoxCorners.clear();
+    }
+    else if (flag == 2) {
+        rectBoxCornersCatchUpToCurFrame.clear();
+    }
+}
