@@ -10,13 +10,18 @@ This project built a tracker to track all the text on the screen. To test the pe
 ## Prerequisites ##
 * opencv 3.1.0
 
-## Your title here... ##
+## Running the code ##
+The software is compiled using the Makefile. Simply run 
 
+	$make
 
+to compile.
 
+Then run 
 
+$./bin/textTracking [video input path] [text location data path]
 
-
-make
-
+For example: 
 ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
+
+If video input path is blank, the system will run the video 1 by default.
