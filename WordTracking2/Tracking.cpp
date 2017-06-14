@@ -52,6 +52,7 @@ std::map<CvPoint , int > map;
 std::vector<CvPoint> reuse2;
 std::vector<std::vector<int> > trackingTable;//a table to keep a record of tracking
 std::vector<Mat> preFrames(10);//store 10 frames to drag rects
+std::vector<CvPoint> originalRect;
 
 //functions
 //For hashmap
@@ -274,6 +275,13 @@ void drawRectangle(CvPoint topLeft, CvPoint bottomRight, int colorIndex) {
     line(imgShow,bottomLeft,topLeft,color,2);
 }
 
+void drawLineBetweenOriginalRectAndUpdatedOnes(CvPoint topLeft, CvPoint bottomRight, int num) {
+    CvPoint oriTopLeft = originalRect[num];
+    CvPoint oriBottomRight = originalRect[num + 1];
+    line(imgShow,topLeft,oriTopLeft,Scalar(255,255,255),1);
+    line(imgShow,bottomRight,oriBottomRight,Scalar(255,255,255),1);
+}
+
 //find point in the rect and calculate the translation vector than create new rect
 //flag==1 for keep update for current frame, flag==2 for far more previous Frame to catch up and update To CurrentFrame
 void findPointInRectAndCreateNewRect(int i, int flag) {
@@ -307,6 +315,9 @@ void findPointInRectAndCreateNewRect(int i, int flag) {
             //draw rectangle
             if(flag == 1) {
                 drawRectangle(newTopLeft, newBottomRight, 0);
+                if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
+                    drawLineBetweenOriginalRectAndUpdatedOnes(newTopLeft, newBottomRight, r);
+                }
             }
         } else {// lost tracking
             //update the rect by (0,0).So thay we can keep the consistancy of the vector, in order to identify the rect by vector index num(know where the rect moved from).
@@ -354,6 +365,7 @@ void insertFrameNumAndUpdateToCurrentFrame(int i) {
 }
 
 void drawOriginalRect() {
+    originalRect.clear();//clear the old one to update new one
     std::vector<CvPoint> boxes = RectBoxes::popFromRectCorner(2);
     int rectListSize = boxes.size();
     RectBoxes::clearVec(2);
@@ -363,6 +375,8 @@ void drawOriginalRect() {
         drawRectangle(topLeft, bottomRight, 1);
         RectBoxes::addCorner(topLeft, 2);//put it back
         RectBoxes::addCorner(bottomRight, 2);
+        originalRect.push_back(topLeft);//in order to draw line between original rect and updated one
+        originalRect.push_back(bottomRight);
     }
     
 }
