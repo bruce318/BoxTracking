@@ -13,29 +13,23 @@ This project built a tracker to track all the text on the screen. To test the pe
 ## Running the code ##
 The software is compiled using the Makefile. Simply run 
 
-<<<<<<< HEAD
+
 $make
-=======
+
 	$make
->>>>>>> 61ab14c1fa09bff395f48f45fa61cfc8f9023f43
+
 
 to compile.
 
 Then run 
 
-<<<<<<< HEAD
+
 $ ./bin/textTracking [video input path] [text location data path]
 
 For example: 
 
 $ ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
-=======
-        $ ./bin/textTracking [video input path] [text location data path]
 
-For example: 
-
-        $ ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
->>>>>>> 61ab14c1fa09bff395f48f45fa61cfc8f9023f43
 
 If video input path is blank, the system will run the video 1 by default.
 ## Commands ##
@@ -45,8 +39,6 @@ When running the code:
 * 'n' -- next frame 
 
 ## The Result ##
-<<<<<<< HEAD
+
 The bounding boxes represent the text field. The red boxes are the original text location which read directly from the file(text location of 5 frames before the current frame). The green boxes are the text field updated to the current frame by using tracking technique. The white line connected the original bounding box with the updated one.
-=======
-The bounding boxes represent the text field. The red boxes are the original text location which read directly from the file(text location of 5 frames before the current frame). The green boxes are the text field updated to the current frame by using tracking technique. The white line connected the original bounding box with the updated one.
->>>>>>> 61ab14c1fa09bff395f48f45fa61cfc8f9023f43
+
