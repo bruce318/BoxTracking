@@ -13,23 +13,17 @@ This project built a tracker to track all the text on the screen. To test the pe
 ## Running the code ##
 The software is compiled using the Makefile. Simply run 
 
-
-$make
-
 	$make
-
 
 to compile.
 
 Then run 
 
-
-$ ./bin/textTracking [video input path] [text location data path]
+    $ ./bin/textTracking [video input path] [text location data path]
 
 For example: 
 
-$ ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
-
+    $ ./bin/textTracking ./videoInput/1.mp4 ./boxCoordinates/1.txt
 
 If video input path is blank, the system will run the video 1 by default.
 ## Commands ##
