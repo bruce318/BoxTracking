@@ -7,7 +7,6 @@
 //
 
 #include "Tracking.hpp"
-#include "opencv2/core/core.hpp"
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "stdio.h"
@@ -25,6 +24,7 @@ const int TOLERENCE_WINSIZE = 5;//half of the winsize eg. 3 means winsize is 7
 const int SSD_WINSIZE = 3;//half of the winsize eg. 5 means winsize is 11
 const double SSD_THRESHOLD = 4;
 const Size imgSize = Size(720,480);//640, 480
+int frameNum = 0;
 bool opticalFlowLineShow = false;
 bool readRectFromTxt = true;
 bool videoInput;
@@ -390,174 +390,126 @@ void loadRectAndUpdate(int frameNum) {
     RectBoxes::shiftFromSubqueueToGlobalQueue();
 }
 
-int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
-    //set input type
-    videoInput = videoOrImage;
-    
-    VideoCapture cap(inputPath);// open the video
+int Tracking::doTracking(Mat image) {
 
-    //if vedio input
-    if (videoInput) {
-        if(!cap.isOpened()) {
-            return -1;// check if we succeeded
-        }
-        cap >> imgNext;
-//        resize(imgNext, imgNext, imgSize);
-        imgNext.copyTo(imgShow);
-        imgShow.copyTo(preFrames[0]);//for drawing rect on previous frames
-        cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
-    } else {//image input
-        //read file
-        String folder = inputPath;
-        cv::glob(folder, fileNames);
+    if (frameNum == 0) {
         //load first frame
-        imgNext = imread(fileNames[1], IMREAD_GRAYSCALE);
-//        resize(imgNext, imgNext, imgSize);
+        imgNext = image;
+        frameNum++;
+        
+        return 0;
     }
-    //frame number
-    int i = 0;
-    //loop through all the images in the file
-    while(1) {
-        //frame num increase 1
-        i++;
-        //check finished for images input
-        if(i >= fileNames.size() - 1) {
-            return 0;
-        }
+    
+    //update frame number
+    frameNum++;
 
-        //Timer
-        std::clock_t start;
-        double duration;
-        start = std::clock();
+    //counting all output key point both good and bad one
+    int keypoint_cnt = 0;
+    //count the numbers of features which are in track
+    int cnt_tracking_feature_each_frame = 0;
+    //put the duplicate and new key point
+    std::vector<CvPoint> temp;
+    //new feature to track record it in the reuse array then use some tolerance to check again
+    std::vector<CvPoint> reuse;
+    //create tracking table for this frame
+    std::vector<int> trackingTableThisFrame(MAX_CORNERS, 0);
+
+    //shift image, clear and copy
+    imgPre.release();
+    //copy to previous frame
+    imgCur.copyTo(imgPre);
+    imgCur.release();
+    imgNext.copyTo(imgCur);
+    imgNext.release();
         
-        //counting all output key point both good and bad one
-        int keypoint_cnt = 0;
-        //count the numbers of features which are in track
-        int cnt_tracking_feature_each_frame = 0;
-        //put the duplicate and new key point
-        std::vector<CvPoint> temp;
-        //new feature to track record it in the reuse array then use some tolerance to check again
-        std::vector<CvPoint> reuse;
-        //create tracking table for this frame
-        std::vector<int> trackingTableThisFrame(MAX_CORNERS, 0);
+
+    //load image
+    imgNext = image;
+    
         
-        //shift image, clear and copy
-        imgPre.release();
-        //copy to previous frame
-        imgCur.copyTo(imgPre);
-        imgCur.release();
-        imgNext.copyTo(imgCur);
-        imgNext.release();
+    int corner_count=MAX_CORNERS;
+    //set it later
+    int win_size;
+    //vector to put output feature points
+    std::vector<Point2f> featuresPre(MAX_CORNERS);
+    std::vector<Point2f> featuresCur(MAX_CORNERS);
+    
+    //find good features to track
+    goodFeaturesToTrack(imgCur,
+                        featuresPre,
+                        MAX_CORNERS,
+                        0.01,
+                        5.0,
+                        Mat(),
+                        3,
+                        0,
+                        0.04
+                        );
         
-        //video input
-        if (videoInput) {
-            //load the frame
-            cap >> imgNext;
-            //check finished
-            if (imgNext.empty()) {
-                return 0;
-            }
-//            resize(imgNext, imgNext, imgSize);
-            imgNext.copyTo(imgShow);
-            imgShow.copyTo(preFrames[i%10]);//for drawing rect on previous frames
-            cvtColor(imgNext, imgNext, COLOR_BGR2GRAY);
-        } else {//image input
-            //load image
-            imgNext = imread(fileNames[i+1], IMREAD_GRAYSCALE);
-//            resize(imgNext, imgNext, imgSize);
-            //load a color image to show
-            imgShow = imread(fileNames[i], IMREAD_COLOR);
-//            resize(imgShow, imgShow, imgSize);
-        }
+    cornerSubPix(imgCur,
+                featuresPre,
+                subPixWinSize,
+                Size(-1,-1),
+                termcrit
+                );
         
-        int corner_count=MAX_CORNERS;
-        //set it later
-        int win_size;
-        //vector to put output feature points
-        std::vector<Point2f> featuresPre(MAX_CORNERS);
-        std::vector<Point2f> featuresCur(MAX_CORNERS);
-        
-        //find good features to track
-        goodFeaturesToTrack(imgCur,
-                            featuresPre,
-                            MAX_CORNERS,
-                            0.01,
-                            5.0,
-                            Mat(),
-                            3,
-                            0,
-                            0.04
-                            );
-        
-        cornerSubPix(imgCur,
-                     featuresPre,
-                     subPixWinSize,
-                     Size(-1,-1),
-                     termcrit
-                     );
-        
-        //output the status and errors of feature point
-        std::vector<uchar> status;
-        std::vector<float> error;
-        
-        //optical flow
-        calcOpticalFlowPyrLK(imgCur,
-                             imgNext,
-                             featuresPre,
-                             featuresCur,
-                             status,
-                             error
-                             );
+    //output the status and errors of feature point
+    std::vector<uchar> status;
+    std::vector<float> error;
+    
+    //optical flow
+    calcOpticalFlowPyrLK(imgCur,
+                        imgNext,
+                        featuresPre,
+                        featuresCur,
+                        status,
+                        error
+                        );
 
         
-        for(int j=0;j<corner_count;j++)
-        {
-            keypoint_cnt++;
-            //start point and end point of the optical flow
-            CvPoint p0=cvPoint(cvRound(featuresPre[j].x),cvRound(featuresPre[j].y));
-            CvPoint p1=cvPoint(cvRound(featuresCur[j].x),cvRound(featuresCur[j].y));
-            //draw line of the optical flow
-            if(opticalFlowLineShow) {
-                line(imgShow,p0,p1,CV_RGB(0,255,0),1);
-            }
+    for (int j=0;j<corner_count;j++) {
+        keypoint_cnt++;
+        //start point and end point of the optical flow
+        CvPoint p0=cvPoint(cvRound(featuresPre[j].x),cvRound(featuresPre[j].y));
+        CvPoint p1=cvPoint(cvRound(featuresCur[j].x),cvRound(featuresCur[j].y));
             
-            //if is the first frame
-            if(i == 1) {
-                //not found in second frame or large error or already recorded -> mark(-1,-1)
-                if(status[j]==0 || error[j]>50 || map.find(p1) != map.end())
-                {
-                    featureList[j].push_back(CvPoint(-1 , -1));
-                    featureList[j].push_back(CvPoint(-1 , -1));
-                } else {
-                    //mark it in the map
-                    map.insert(std::pair<CvPoint, int>(p1 , j));
-                    //record the feature's coordinate
-                    featureList[j].push_back(p0);
-                    featureList[j].push_back(p1);
-                }
-                //not the first frame
+        //if is the second frame. Don't need find features to create feature chain, just add feature to list
+        if(frameNum == 1) {
+            //not found in second frame or large error or already recorded -> mark(-1,-1)
+            if(status[j]==0 || error[j]>50 || map.find(p1) != map.end())
+            {
+                featureList[j].push_back(CvPoint(-1 , -1));
+                featureList[j].push_back(CvPoint(-1 , -1));
             } else {
-                //if not found in second frame or large error->record it in the temp array first and establish the lost feature by them at the end of each frame so that the total number of featureList won't change.(consistancy)
-                if(status[j]==0|| error[j]>50) {
+                //mark it in the map
+                map.insert(std::pair<CvPoint, int>(p1 , j));
+                //record the feature's coordinate
+                featureList[j].push_back(p0);
+                featureList[j].push_back(p1);
+            }
+            //not the first frame
+        } else {
+            //if not found in second frame or large error->record it in the temp array first and establish the lost feature by them at the end of each frame so that the total number of featureList won't change.(consistancy)
+            if(status[j]==0|| error[j]>50) {
+                temp.push_back(CvPoint(-1 , -1));
+                temp.push_back(CvPoint(-1 , -1));
+            } else if (map.find(p0) != map.end()) {//if the feature coordinate match one of the feature's end point in last frame -> connect them
+                int index = map[p0];
+                //avoid duplicate point(not duplicate)
+                if(featureList[index].size() < frameNum*2) {
+                    count++;
+                    cnt_tracking_feature_each_frame++;
+                    featureList[index].push_back(p0);
+                    featureList[index].push_back(p1);
+                    //                        std::cout<<index<<"-"<<featureList[index].size() - 2<<std::endl;
+                    //                        std::cout<<"x="<<p0.x<<"y="<<p0.y<<std::endl;
+                    //record on the tracking table
+                    trackingTableThisFrame[index] = trackingTable[frameNum - 2][index] + 1;
+                    
+                } else {//duplicate
                     temp.push_back(CvPoint(-1 , -1));
                     temp.push_back(CvPoint(-1 , -1));
-                } else if (map.find(p0) != map.end()) {//if the feature coordinate match one of the feature's end point in last frame -> connect them
-                    int index = map[p0];
-                    //avoid duplicate point(not duplicate)
-                    if(featureList[index].size() < i*2) {
-                        count++;
-                        cnt_tracking_feature_each_frame++;
-                        featureList[index].push_back(p0);
-                        featureList[index].push_back(p1);
-                        //                        std::cout<<index<<"-"<<featureList[index].size() - 2<<std::endl;
-                        //                        std::cout<<"x="<<p0.x<<"y="<<p0.y<<std::endl;
-                        //record on the tracking table
-                        trackingTableThisFrame[index] = trackingTable[i - 2][index] + 1;
-                        
-                    } else {//duplicate
-                        temp.push_back(CvPoint(-1 , -1));
-                        temp.push_back(CvPoint(-1 , -1));
-                    }
+                }
                     
                 } else {//new feature to track
                     //record it in the reuse array then use some tolerance to check again
@@ -568,13 +520,13 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         }
         
         
-        if (i > 1) {
-            //to speed up,canceled the second round check
-            //second round add tolerance seek tracking point
+        if (frameNum > 1) {
+        //to speed up,canceled the second round check
+        //second round add tolerance seek tracking point
 //            second_round_check(reuse, temp, i, trackingTableThisFrame);
 //            reuse.clear();
             
-            thirdRoundCheck(i, temp, trackingTableThisFrame);
+            thirdRoundCheck(frameNum, temp, trackingTableThisFrame);
             reuse2.clear();
         }
         
@@ -586,7 +538,7 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         size_t tempSize = temp.size();//mark the temp size
         for (int k = 0 ; k < featureList.size() ; k++) {
             //size!=i*2 means didn't renew in this frame
-            if(featureList[k].size() != i*2) {
+            if(featureList[k].size() != frameNum*2) {
                 //sometimes we set max corner to detect, but computer didn't find so many corner feature
                 if (tempIt < tempSize) {
                     //avoid duplicate
@@ -606,11 +558,11 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             }
             //put the feature coordinate(not (-1,-1) one) into the map
             //and draw circles on the feature points. Color depends on the chain length
-            if (featureList[k][i*2-1].x != -1 || featureList[k][i*2-1].y != -1) {
-                map.insert(std::pair<CvPoint, int>(featureList[k][i*2-1] , k));
+            if (featureList[k][frameNum*2-1].x != -1 || featureList[k][frameNum*2-1].y != -1) {
+                map.insert(std::pair<CvPoint, int>(featureList[k][frameNum*2-1] , k));
                 int colorIndex = trackingTableThisFrame[k]>8?8:trackingTableThisFrame[k];
                 Scalar circleColor = chainLengthColor[colorIndex];
-                circle(imgShow, featureList[k][i*2 - 2], 3, circleColor, 1);
+                circle(imgShow, featureList[k][frameNum*2 - 2], 3, circleColor, 1);
             }
         }
         if (tempIt != tempSize) {
@@ -625,23 +577,9 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
         //clear
         temp.clear();
         trackingTableThisFrame.clear();
-        
-        
-        //check the number of tracked key point
-        //        std::cout<<"tracked key point:"<<cnt_tracking_feature_each_frame<<" keypointNum"<<keypoint_cnt<<std::endl;
-        //check the number of valid keypoint
-        //        std::cout<<"valid key point:"<<map.size()<<std::endl;
+    
+    
         cnt_total_valid_point += map.size();
-        
-        
-        //For testing - search
-        //    for(int i = 0 ; i < featureList.size() ; i++){
-        //        for(int j = 0 ; j < featureList[i].size() ; j++){
-        //            if(featureList[i][j].x == 817 && featureList[i][j].y == 549){
-        //                std::cout<< "found:" <<i<<","<<j<< std::endl;
-        //            }
-        //        }
-        //    }
         
         
         //read the rectangles from txt file. read once every interval.
@@ -661,46 +599,12 @@ int Tracking::doTracking(bool videoOrImage, std::string inputPath) {
             findPointInRectAndCreateNewRect(i, 1);
         }
         
-        namedWindow("LKpyr_opticalFlow");
-        resize(imgShow, imgShow, imgSize);
-        imshow("LKpyr_opticalFlow",imgShow);
-        std::cout<<"Current Frame Number:"<<i<<std::endl<<"Press 'd' to define boxes"<<std::endl;
-        
-        //Output timer
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout<<"Time: "<< duration <<'\n';
-        
-        //save image
-        if (saveResult) {
-            imwrite("/Users/boyang/workspace/BoxTracking/result/" + std::to_string(i) + ".jpg", imgShow);
-        }
-        
-        int key = cvWaitKey(0);
-        
-        //if press key "d" means want to insert delayed frame number
-        if(key == 'd') {
-            insertFrameNumAndUpdateToCurrentFrame(i);
-        }
-        
-        if(key == 'q') {
-            return 0;
-        }
-        
-    }
     
-    
-    //analysis: static of tracking chain
-    //static_of_tracking_chain (featureList);
-    
-    
-    //analysis: static of tracking chain by tracking table
-    //    analysis();
     
     std::cout<<"addBy1PixelTorlerance"<<cntTolerancePerformance<<std::endl;
     std::cout<<"addByTolerance"<<cntAddByTolerance<<std::endl;
-    //    std::cout<<"total tracked keypoint"<<count<<std::endl;
     std::cout<<"total valid keypoint"<<cnt_total_valid_point<<std::endl;
-    
+
     
     
     return 0;

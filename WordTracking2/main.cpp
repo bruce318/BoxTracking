@@ -30,6 +30,7 @@ int main(int argc, const char * argv[]) {
     ReadRectFromFile::loadRects(filePath);
     
     //start
-    return Tracking::doTracking(videoInput, inputPath);
+//    return Tracking::doTracking(videoInput, inputPath);
+    return 0;
 
 }

@@ -11,10 +11,11 @@
 
 #include <stdio.h>
 #include <string>
+#include "opencv2/core/core.hpp"
 
 class Tracking{
 public:
-    static int doTracking(bool videoOrImage, std::string);
+    static int doTracking(cv::Mat image);
     
 private:
 };
