@@ -13,9 +13,11 @@
 #include <string>
 #include "opencv2/core/core.hpp"
 
+using namespace cv;
+
 class Tracking{
 public:
-    static int doTracking(cv::Mat image);
+    static int doTracking(Mat image);
     
 private:
 };
