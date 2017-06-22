@@ -14,6 +14,7 @@
 		7C14EAB11EA870E00087EC0F /* libopencv_core.3.1.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C14EAAD1EA870E00087EC0F /* libopencv_core.3.1.0.dylib */; };
 		7C86F7801ED691AA0087BE5B /* Tracking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C86F77E1ED691AA0087BE5B /* Tracking.cpp */; };
 		7CAD337F1EDFD1E000814EFF /* ReadRectFromFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7CAD337D1EDFD1E000814EFF /* ReadRectFromFile.cpp */; };
+		7CAD33AB1EFBA56E00814EFF /* forJNI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7CAD33A91EFBA56E00814EFF /* forJNI.cpp */; };
 		7CF94A3D1EC440D200E8FFAD /* RectBoxes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7CF94A3B1EC440D200E8FFAD /* RectBoxes.cpp */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +41,8 @@
 		7C86F77F1ED691AA0087BE5B /* Tracking.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Tracking.hpp; sourceTree = "<group>"; };
 		7CAD337D1EDFD1E000814EFF /* ReadRectFromFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ReadRectFromFile.cpp; sourceTree = "<group>"; };
 		7CAD337E1EDFD1E000814EFF /* ReadRectFromFile.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ReadRectFromFile.hpp; sourceTree = "<group>"; };
+		7CAD33A91EFBA56E00814EFF /* forJNI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = forJNI.cpp; sourceTree = "<group>"; };
+		7CAD33AA1EFBA56E00814EFF /* forJNI.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = forJNI.hpp; sourceTree = "<group>"; };
 		7CF94A3B1EC440D200E8FFAD /* RectBoxes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RectBoxes.cpp; sourceTree = "<group>"; };
 		7CF94A3C1EC440D200E8FFAD /* RectBoxes.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RectBoxes.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -86,6 +89,8 @@
 				7CF94A3C1EC440D200E8FFAD /* RectBoxes.hpp */,
 				7CAD337D1EDFD1E000814EFF /* ReadRectFromFile.cpp */,
 				7CAD337E1EDFD1E000814EFF /* ReadRectFromFile.hpp */,
+				7CAD33A91EFBA56E00814EFF /* forJNI.cpp */,
+				7CAD33AA1EFBA56E00814EFF /* forJNI.hpp */,
 			);
 			path = WordTracking2;
 			sourceTree = "<group>";
@@ -161,6 +166,7 @@
 				7C14EAA31EA86ED20087EC0F /* main.cpp in Sources */,
 				7C86F7801ED691AA0087BE5B /* Tracking.cpp in Sources */,
 				7CF94A3D1EC440D200E8FFAD /* RectBoxes.cpp in Sources */,
+				7CAD33AB1EFBA56E00814EFF /* forJNI.cpp in Sources */,
 				7CAD337F1EDFD1E000814EFF /* ReadRectFromFile.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
