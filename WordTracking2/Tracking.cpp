@@ -556,22 +556,6 @@ int Tracking::doTracking(Mat image) {
         cnt_total_valid_point += map.size();
         
         
-        //read the rectangles from txt file. read once every interval.
-        //read the privious interval's data to simulate the delay from the server.So first frame don't read data
-        //frame num i start from 1, others frame num counter start from 0. For consistance, i-1.
-        if(readRectFromTxt && (i-1) != 0 && (i-1)%ReadRectFromFile::intervalOfFrame == 0) {
-            
-            //clear privious rect boxes
-            RectBoxes::clearRectBoxCorners();
-            
-            //load new boxes and update to current frame
-            loadRectAndUpdate(i-1);
-        }
-        
-        if(i>1) {
-            //find points in the rectangle and update from provious frame to current frame
-            findPointInRectAndCreateNewRect(i, 1);
-        }
         
     
     

@@ -35,7 +35,12 @@ Java_com_leo_neat_ctest_MainActivity_stringFromJNI(
     Tracking::doTracking(image);
     
     // the rectangles are already updated but with delay?
-    if (recieve update from server)  {
+    /*
+     
+     Need to add code for getting the rectangle data(rects), the frame number(frameNum) and the frame number which is delayed(frameNumDelayed)
+     
+     */
+    if (/*recieve update from server*/)  {
         //clear privious rect boxes
         RectBoxes::clearRectBoxCorners();
         //get each rectangle and update
@@ -48,7 +53,7 @@ Java_com_leo_neat_ctest_MainActivity_stringFromJNI(
     }
     
     if(i>1) {
-            //find points in the rectangle and update from provious frame to current frame
+        //find points in the rectangle and update from provious frame to current frame
         Tracking::findPointInRectAndCreateNewRect(frameNum, 1);
     }
     
@@ -56,7 +61,9 @@ Java_com_leo_neat_ctest_MainActivity_stringFromJNI(
     std::vector<cv::Rect> result;
     result = RectBoxes::outPutRect();
     
-    
+    /*
+     Need to add code to return the result to Android
+     */
 
 
     
