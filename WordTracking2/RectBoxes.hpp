@@ -26,12 +26,12 @@ public:
     static void shiftFromSubqueueToGlobalQueue();
     static void clearRectBoxCorners();
     static void clearVec(int flag);
+    static std::vector<cv::Rect> outPutRect();
     
 private:
     static std::vector<CvPoint> rectBoxCorners;
     static std::vector<CvPoint> rectBoxCornersCatchUpToCurFrame;
     static std::vector<CvPoint> pointDiff;
-    
 
 };
 

@@ -86,6 +86,13 @@ void ReadRectFromFile::loadRects(std::string rectFilePath) {
     else std::cout << "Unable to open file"<<std::endl;
 }
 
+void ReadRectFromFile::putRectIntoList(Rect rect) {
+    CvPoint topLeft = CvPoint(rect.x, rect.y);
+    CvPoint bottomRight = CvPoint(rect.x + rect.width, rect.y + rect.height);
+    RectBoxes::addCorner(topLeft, 2);
+    RectBoxes::addCorner(bottomRight, 2);
+}
+
 void ReadRectFromFile::copyRectsToQueue(int frameNum) {
     int rowNum = frameNum/intervalOfFrame - 1;//load the privious interval's frame to simulate delay
     for (int k = 0 ; k < rects[rowNum].size() ; k++) {

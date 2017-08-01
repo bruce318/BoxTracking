@@ -52,6 +52,17 @@ std::vector<CvPoint> RectBoxes::popFromRectCorner(int flag) {
     }
     return pts;
 }
+std::vector<cv::Rect> outPutRect() {
+    std::vector<CvPoint> points;
+    std::vector<cv::Rect> result;
+    points = RectBoxes::popFromRectCorner(1);
+    for (int i = 0 ; i < points.size() ; i+=2) {
+        CvPoint topLeft = points[i];
+        CvPoint bottomRight = points[i+1];
+        result.push_back(cv::Rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y));
+    }
+    return result;
+}
 
 //check the point is inside the box or not
 bool RectBoxes::insideTheBox(CvPoint topLeft, CvPoint bottomRight, CvPoint pointPreFram) {

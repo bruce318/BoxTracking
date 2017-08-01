@@ -23,6 +23,7 @@ public:
     static void loadIntoTable(std::string line);
     static void copyRectsToQueue(int frameNum);
     static int intervalOfFrame;
+    static void putRectIntoList(Rect rect);
     
 private:
     static std::vector<std::vector<CvPoint> > rects;//A list of rectangle coordinates.

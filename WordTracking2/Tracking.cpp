@@ -327,41 +327,15 @@ void findPointInRectAndCreateNewRect(int i, int flag) {
     }
 }
 
-void insertFrameNumAndUpdateToCurrentFrame(int i) {
-    //insert the absolute frame number
-    std::cout<<"Please insert frame number"<<std::endl;
-    int frameNumDelayed;
-    std::cin>>frameNumDelayed;
-    std::cout<<"Frame Numer is:"<<frameNumDelayed<<std::endl;
-    if(frameNumDelayed > i) {
-        std::cout<<"frame number should be lesser than current frame number"<<std::endl;
-    } else {
-        //open window to drag rectangle
-        Mat imgDragRect;
-        if(videoInput) {
-            imgDragRect = preFrames[frameNumDelayed%10];
-        } else {
-            imgDragRect = imread(fileNames[frameNumDelayed], IMREAD_COLOR);
-        }
-//        resize(imgDragRect, imgDragRect, imgSize);
-        namedWindow("Please drag rectangles");
-        imshow("Please drag rectangles",imgDragRect);
-        //select rect box by click 2 corner(top left and bottom right)
-        setMouseCallback("Please drag rectangles", onMouse, 0 );
-        //wait for dragging rectangles
-        cvWaitKey(0);
-        //throw window and release image
-        destroyWindow("Please drag rectangles");
-        imgDragRect.release();
-        
-        //update the rect location to current frame
-        //frameNumDelayed + 1 because the rect is in the correct location in this frame, next frame and further neet to process and relocate
-        for(int k = frameNumDelayed + 1 ; k <= i ; k++) {
-            findPointInRectAndCreateNewRect(k, 2);
-        }
-        //shift the rect corner to the global queue(rectBoxCorners) to keep tracking in the frame after
-        RectBoxes::shiftFromSubqueueToGlobalQueue();
+void insertFrameNumAndUpdateToCurrentFrame(int frameNumDelayed, int frameNum) {
+    //update the rect location to current frame
+    //frameNumDelayed + 1 because the rect is in the correct location in this frame, next frame and further neet to process and relocate
+    for(int k = frameNumDelayed + 1 ; k <= frameNum ; k++) {
+        findPointInRectAndCreateNewRect(k, 2);
     }
+    //shift the rect corner to the global queue(rectBoxCorners) to keep tracking in the frame after
+    RectBoxes::shiftFromSubqueueToGlobalQueue();
+    
 }
 
 void drawOriginalRect() {

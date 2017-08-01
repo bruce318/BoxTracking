@@ -18,7 +18,8 @@ using namespace cv;
 class Tracking{
 public:
     static int doTracking(Mat image);
-    
+    static void insertFrameNumAndUpdateToCurrentFrame(int frameNumDelayed, int frameNum);
+    static void findPointInRectAndCreateNewRect(int i, int flag);
 private:
 };
 
